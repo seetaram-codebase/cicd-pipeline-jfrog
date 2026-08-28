@@ -2,6 +2,11 @@
 # EC2 user-data for the Jenkins build agent. Fargate can't run `docker build`
 # (no privileged containers), so this instance carries the real Docker
 # daemon plus the tools the Jenkinsfile shells out to.
+#
+# Lives inside infra/jenkins-ecs/ (not scripts/) so Terraform's file()
+# reference stays within this module's own directory — Terraform Cloud's
+# remote runner only ever sees infra/jenkins-ecs/ as "the configuration",
+# not the rest of the repo.
 set -euo pipefail
 
 apt-get update -y

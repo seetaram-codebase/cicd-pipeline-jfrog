@@ -88,7 +88,7 @@ resource "aws_instance" "build_agent" {
   key_name                    = var.agent_key_name != "" ? var.agent_key_name : null
   associate_public_ip_address = true
 
-  user_data = file("${path.module}/../../scripts/agent-userdata.sh")
+  user_data = file("${path.module}/agent-userdata.sh")
 
   tags = { Name = "${var.app_name}-build-agent" }
 }
