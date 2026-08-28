@@ -30,15 +30,21 @@ stages to `agent { label 'build' }`, which runs there.
    in the session runbook (Critical/High always blocks; Medium blocks only
    at the staging→release gate).
 
-2. **Jenkins infrastructure**
-   ```
-   cd infra/jenkins-ecs
-   cp terraform.tfvars.example terraform.tfvars   # edit as needed
-   terraform init
-   terraform apply
-   ```
-   Read the `next_steps` output when it finishes — it has the controller
-   URL, the build agent's IP, and the manual node-attach step.
+2. **Jenkins infrastructure — applied via GitHub Actions, not locally.**
+   `infra/jenkins-ecs/providers.tf` uses a Terraform Cloud backend
+   (org `agentic-ai-org`, workspace `jfrog-demo-jenkins` — change if that's
+   not your org). `.github/workflows/infrastructure.yml` runs Terraform on
+   a hosted GitHub runner. Before triggering it, add these repo secrets
+   (Settings → Secrets and variables → Actions) — never commit these
+   values anywhere:
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
+   - `TF_API_TOKEN` (Terraform Cloud user API token)
+
+   Then run the workflow: Actions tab → "Infrastructure - Terraform" →
+   Run workflow → action = `plan` first to sanity-check, then again with
+   `apply`. Check the run's Job Summary and the Terraform Cloud workspace
+   for outputs — the controller URL and build agent IP.
 
 3. **Jenkins UI** — unlock, install suggested plugins + the JFrog plugin,
    create an admin user, attach the EC2 build agent as a node labeled

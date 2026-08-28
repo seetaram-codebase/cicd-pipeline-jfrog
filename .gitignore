@@ -4,6 +4,7 @@
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+!infra/jenkins-ecs/environments/*.tfvars
 crash.log
 crash.*.log
 
