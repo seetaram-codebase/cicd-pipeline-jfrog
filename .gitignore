@@ -13,6 +13,10 @@ crash.*.log
 *.pem
 *.key
 
+# Personal / proprietary conference material — never belongs in a public repo
+ppt/
+*.pptx
+
 # OS
 .DS_Store
 Thumbs.db
