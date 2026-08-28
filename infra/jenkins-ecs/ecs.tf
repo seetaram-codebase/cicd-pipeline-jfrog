@@ -106,7 +106,13 @@ resource "aws_ecs_service" "jenkins" {
     assign_public_ip = true
   }
 
-  depends_on = [aws_efs_mount_target.jenkins_home]
+  load_balancer {
+    target_group_arn = aws_lb_target_group.jenkins.arn
+    container_name   = "jenkins"
+    container_port   = 8080
+  }
+
+  depends_on = [aws_efs_mount_target.jenkins_home, aws_lb_listener.jenkins]
 
   lifecycle {
     ignore_changes = [task_definition]
