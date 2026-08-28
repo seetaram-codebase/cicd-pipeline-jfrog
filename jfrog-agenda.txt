@@ -1,0 +1,11 @@
+Container images are the backbone of modern application delivery, but building secure, traceable, and efficient container pipelines remains a challenge. In this session, we'll walk through real-world implementation of container build and deployment workflows using JFrog Artifactory integrated with CI/CD platforms.
+
+You'll learn how to:
+
+- Structure Docker repositories for dev, staging, and production workflows
+- Implement automated container scanning and vulnerability management with JFrog Xray
+- Create promotion pipelines that enforce security policies before production deployment
+- Optimize build performance with layer caching and multi-stage builds
+Integrate JFrog CLI with GitHub Actions, GitLab CI, or Jenkins for seamless automation
+
+Through live demonstrations and practical examples, we'll show how to transform manual container builds into a fully automated, secure supply chain. Whether you're just starting with containers or looking to mature your existing practices, you'll leave with actionable patterns you can implement immediately.
