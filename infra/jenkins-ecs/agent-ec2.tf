@@ -74,6 +74,15 @@ resource "aws_iam_role_policy" "build_agent_deploy" {
   })
 }
 
+# Lets you reach the agent through EC2 Console → Connect → Session Manager
+# (browser-based shell) instead of SSH — no key pair, no open port 22.
+# Ubuntu's official Canonical AMI ships the SSM agent preinstalled; this
+# just grants it permission to register.
+resource "aws_iam_role_policy_attachment" "build_agent_ssm" {
+  role       = aws_iam_role.build_agent.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 resource "aws_iam_instance_profile" "build_agent" {
   name = "${var.app_name}-agent-profile"
   role = aws_iam_role.build_agent.name
