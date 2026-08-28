@@ -13,8 +13,8 @@ pipeline {
   agent { label 'build' }
 
   environment {
-    JF_URL          = 'https://demo.jfrog.io'
-    DOCKER_REGISTRY = 'demo.jfrog.io'
+    JF_URL          = 'https://trialkj7tft.jfrog.io'
+    DOCKER_REGISTRY = 'trialkj7tft.jfrog.io'
     APP_NAME        = 'shipit'
     DEV_REPO        = 'docker-dev-local'
     STAGING_REPO    = 'docker-staging-local'
