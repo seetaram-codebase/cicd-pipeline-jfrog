@@ -26,3 +26,8 @@ def health():
 @app.get("/version")
 def version():
     return BUILD_INFO
+
+
+@app.get("/ping")
+def ping():
+    return {"pong": True}
