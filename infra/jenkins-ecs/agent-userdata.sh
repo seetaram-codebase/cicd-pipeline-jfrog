@@ -12,18 +12,25 @@
 set -euo pipefail
 
 apt-get update -y
-apt-get install -y docker.io curl unzip openjdk-17-jre-headless awscli git gnupg
+apt-get install -y docker.io curl unzip openjdk-21-jre-headless awscli git gnupg
 
 systemctl enable --now docker
 usermod -aG docker ubuntu
 
-# JFrog CLI
+# JFrog CLI — the installer drops a binary literally named `jfrog` (not
+# `jf`) into the current directory.
+mkdir -p /tmp/jfrog-install && cd /tmp/jfrog-install
 curl -fL https://getcli.jfrog.io | sh
-install -m 0755 jf /usr/local/bin/jf
+install -m 0755 jfrog /usr/local/bin/jf
+cd /
 
-# Jenkins, from the official apt repo
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/" > /etc/apt/sources.list.d/jenkins.list
+# Jenkins, from the official apt repo. The signing key is year-suffixed
+# and rotates periodically (current one expires 2028-12-21) — if apt
+# start reporting NO_PUBKEY, check https://pkg.jenkins.io/debian-stable/
+# for the current filename. The key file is already ASCII-armored, so it
+# goes to apt's signed-by as-is — no `gpg --dearmor` needed.
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key -o /usr/share/keyrings/jenkins-keyring.asc
+echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" > /etc/apt/sources.list.d/jenkins.list
 apt-get update -y
 apt-get install -y jenkins
 
