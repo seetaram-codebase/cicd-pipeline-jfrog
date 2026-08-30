@@ -1,9 +1,10 @@
 # JFrog × Jenkins container pipeline demo
 
 Scaffold for the container CI/CD showcase (see `jfrog-agenda.txt`). A sample
-FastAPI app, a Jenkinsfile that builds it, scans it with Xray, and promotes
-it through `docker-dev-local` → `docker-staging-local` → `docker-release-local`,
-and the Terraform to host Jenkins.
+FastAPI app, a Jenkinsfile that builds it and scans it with Xray, routing
+each build by branch — `feature/*` into `docker-sandbox-local`,
+`develop`/`master` straight into `docker-release-local` with an automatic
+prod deploy — plus the Terraform to host Jenkins.
 
 ## Architecture note: one EC2 instance
 
@@ -22,19 +23,20 @@ worth remembering if you start relying on it longer-term.
 
 ## Not yet built
 
-- The app's own ECS services (`shipit-staging` / `shipit-production`) that
-  the Jenkinsfile's deploy stages target — infra for those isn't scaffolded
-  yet, so those two stages will fail until they exist.
+- The app's own ECS service (`shipit-production`) that the Jenkinsfile's
+  deploy stage targets — infra for it isn't scaffolded yet, so that stage
+  will fail until it exists.
 - Artifactory repos and Xray watches/policies — created in the JFrog UI,
   not Terraform (see steps below).
 
 ## Setup order
 
 1. **JFrog Cloud** — confirm your trial/tier includes Xray, then create
-   three Docker repos: `docker-dev-local`, `docker-staging-local`,
-   `docker-release-local`. Attach an Xray watch + policy per the gate table
-   in the session runbook (Critical/High always blocks; Medium blocks only
-   at the staging→release gate).
+   two Docker repos: `docker-sandbox-local`, `docker-release-local`.
+   Attach an Xray watch + policy to each per the gate table in `SPEC.md`
+   (Critical/High blocks on sandbox; Critical/High/Medium blocks on
+   release — passing the release-repo gate is what lets a build reach
+   production).
 
 2. **Jenkins infrastructure — applied via GitHub Actions, not locally.**
    `infra/jenkins-ecs/providers.tf` uses a Terraform Cloud backend
@@ -62,17 +64,21 @@ worth remembering if you start relying on it longer-term.
 4. **Edit `Jenkinsfile`** — replace `JF_URL`, `DOCKER_REGISTRY`, and
    `ECS_CLUSTER` placeholders with real values.
 
-5. **Push this repo to GitHub**, create a Jenkins pipeline job pointing at
-   it, wire the GitHub webhook to `http://<jenkins-ip>:8080/github-webhook/`.
+5. **Push this repo to GitHub**, create a Jenkins **Multibranch Pipeline**
+   job pointing at it (a plain Pipeline job won't populate
+   `env.BRANCH_NAME`, which the branch-routing logic needs), wire the
+   GitHub webhook to `http://<jenkins-ip>:8080/github-webhook/`.
 
-6. **Dry run.** Push a commit, watch the pipeline build `docker-dev-local`
-   with the deliberately outdated base image (`app/base-image.env` starts
-   on `3.9-slim-buster`) and get blocked at the Xray gate.
+6. **Dry run.** Push a commit on a `feature/*` branch, watch the pipeline
+   build into `docker-sandbox-local` with the deliberately outdated base
+   image (`app/base-image.env` starts on `3.9-slim-buster`) and get
+   blocked at the Xray gate.
 
 7. **Run `scripts/break-the-build.sh`**, commit, push — switches to a
-   patched base image, re-run clears both gates. This is the live-demo
-   beat: broken → fixed, same pipeline, no code changes besides the base
-   image.
+   patched base image, re-run clears the gate. Then push the same fix to
+   `master` to see it build straight into `docker-release-local` and
+   auto-deploy. This is the live-demo beat: broken → fixed, same
+   pipeline, no code changes besides the base image.
 
 ## Local dry run (no Jenkins)
 
