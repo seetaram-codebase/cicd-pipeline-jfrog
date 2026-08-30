@@ -1,6 +1,6 @@
-// Runs entirely on the 'build' agent (EC2), not the Fargate-hosted
-// controller — the controller can't run `docker build` (Fargate disallows
-// privileged containers). See infra/jenkins-ecs/agent-ec2.tf.
+// Runs on Jenkins' built-in node, labeled 'build' — controller and build
+// execution are the same single EC2 instance, with a real Docker daemon.
+// See infra/jenkins-ecs/agent-ec2.tf.
 //
 // Before first run, fill in:
 //   - JF_URL / DOCKER_REGISTRY  (your JFrog Cloud instance)

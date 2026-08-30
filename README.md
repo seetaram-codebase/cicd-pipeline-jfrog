@@ -5,14 +5,20 @@ FastAPI app, a Jenkinsfile that builds it, scans it with Xray, and promotes
 it through `docker-dev-local` → `docker-staging-local` → `docker-release-local`,
 and the Terraform to host Jenkins.
 
-## Architecture note: two hosts, not one
+## Architecture note: one EC2 instance
 
-The Jenkins **controller** runs on ECS Fargate (`infra/jenkins-ecs/`) —
-public, reachable by GitHub's webhook, no tunnel needed. But **Fargate
-disallows privileged containers**, so it cannot run `docker build` itself.
-A small EC2 instance (`infra/jenkins-ecs/agent-ec2.tf`) is the actual build
-agent — real Docker daemon, `jf` CLI, `aws` CLI. The Jenkinsfile pins its
-stages to `agent { label 'build' }`, which runs there.
+Jenkins runs on a single EC2 instance (`infra/jenkins-ecs/agent-ec2.tf`) —
+controller and build execution together. A real (non-Fargate) Docker
+daemon lives on the same box, so pipeline stages just run on Jenkins'
+**built-in node** — the Jenkinsfile's `agent { label 'build' }` is
+satisfied by labeling that built-in node `build` (one-time UI step, see
+below), no separate agent to attach. An Elastic IP keeps the address
+stable across stops/restarts, so the GitHub webhook config doesn't break.
+
+Tradeoff: `JENKINS_HOME` lives on the instance's local EBS volume, not a
+separate durable store — if the instance is terminated, Jenkins config
+(admin user, plugins, credentials) goes with it. Fine for this demo;
+worth remembering if you start relying on it longer-term.
 
 ## Not yet built
 
@@ -44,11 +50,14 @@ stages to `agent { label 'build' }`, which runs there.
    Then run the workflow: Actions tab → "Infrastructure - Terraform" →
    Run workflow → action = `plan` first to sanity-check, then again with
    `apply`. Check the run's Job Summary and the Terraform Cloud workspace
-   for outputs — the controller URL and build agent IP.
+   for outputs — the Jenkins URL (Elastic IP).
 
-3. **Jenkins UI** — unlock, install suggested plugins + the JFrog plugin,
-   create an admin user, attach the EC2 build agent as a node labeled
-   `build`, add a `jfrog-access-token` (Secret text) credential.
+3. **Jenkins UI** — unlock (initial admin password via SSM:
+   `cat /var/lib/jenkins/secrets/initialAdminPassword`), install suggested
+   plugins + the JFrog plugin, create an admin user, then Manage Jenkins >
+   Nodes > built-in node > Configure > add label `build` so pipeline
+   stages run on this same instance. Add a `jfrog-access-token`
+   (Secret text) credential.
 
 4. **Edit `Jenkinsfile`** — replace `JF_URL`, `DOCKER_REGISTRY`, and
    `ECS_CLUSTER` placeholders with real values.

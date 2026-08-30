@@ -14,23 +14,15 @@ data "aws_subnets" "default" {
 
 resource "aws_security_group" "jenkins" {
   name        = "${var.app_name}-sg"
-  description = "Jenkins controller (ECS Fargate)"
+  description = "Jenkins controller + build execution (single EC2 instance)"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
-    description = "Jenkins web UI"
+    description = "Jenkins web UI / GitHub webhook"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = [var.admin_cidr]
-  }
-
-  ingress {
-    description = "Jenkins agent JNLP"
-    from_port   = 50000
-    to_port     = 50000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -42,27 +34,4 @@ resource "aws_security_group" "jenkins" {
   }
 
   tags = { Name = "${var.app_name}-sg" }
-}
-
-resource "aws_security_group" "efs" {
-  name        = "${var.app_name}-efs-sg"
-  description = "Allow NFS from the Jenkins controller"
-  vpc_id      = data.aws_vpc.default.id
-
-  ingress {
-    description     = "NFS from Jenkins controller"
-    from_port       = 2049
-    to_port         = 2049
-    protocol        = "tcp"
-    security_groups = [aws_security_group.jenkins.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = { Name = "${var.app_name}-efs-sg" }
 }
