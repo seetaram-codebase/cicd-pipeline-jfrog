@@ -17,6 +17,14 @@ apt-get install -y docker.io curl unzip openjdk-21-jre-headless awscli git gnupg
 systemctl enable --now docker
 usermod -aG docker ubuntu
 
+# BuildKit (docker.io's apt package doesn't ship the buildx CLI plugin,
+# but Dockerfiles using RUN --mount=... need it). Installed system-wide
+# so it works for the jenkins user too, not just ubuntu.
+BUILDX_VER=$(curl -fsSL https://api.github.com/repos/docker/buildx/releases/latest | grep tag_name | cut -d'"' -f4)
+mkdir -p /usr/libexec/docker/cli-plugins
+curl -fL "https://github.com/docker/buildx/releases/download/${BUILDX_VER}/buildx-${BUILDX_VER}.linux-amd64" -o /usr/libexec/docker/cli-plugins/docker-buildx
+chmod +x /usr/libexec/docker/cli-plugins/docker-buildx
+
 # JFrog CLI — the installer drops a binary literally named `jfrog` (not
 # `jf`) into the current directory.
 mkdir -p /tmp/jfrog-install && cd /tmp/jfrog-install
