@@ -19,6 +19,7 @@ output "next_steps" {
        "build" — the Jenkinsfile's `agent { label 'build' }` then runs
        right here, no separate agent to attach
     5. Add credentials: jfrog-access-token (Secret text)
-    6. Create a pipeline job pointing at this repo's Jenkinsfile
+    6. Create a Multibranch Pipeline job pointing at the fastapi-jfrog-demo
+       repo (env.BRANCH_NAME is required for the branch-routing logic)
   EOT
 }

@@ -1,10 +1,12 @@
-# JFrog × Jenkins container pipeline demo
+# JFrog × Jenkins container pipeline demo — infra
 
-Scaffold for the container CI/CD showcase (see `jfrog-agenda.txt`). A sample
-FastAPI app, a Jenkinsfile that builds it and scans it with Xray, routing
-each build by branch — `feature/*` into `docker-sandbox-local`,
-`develop`/`master` straight into `docker-release-local` with an automatic
-prod deploy — plus the Terraform to host Jenkins.
+Scaffold for the container CI/CD showcase (see `jfrog-agenda.txt`). This
+repo is the **infra half**: Terraform to host Jenkins on a single EC2
+instance. The application half — a sample FastAPI app, its `Jenkinsfile`,
+and `scripts/break-the-build.sh` — lives in a separate repo:
+[fastapi-jfrog-demo](https://github.com/seetaram-codebase/fastapi-jfrog-demo).
+That's what the Jenkins job actually builds; this repo just stands up
+Jenkins itself.
 
 ## Architecture note: one EC2 instance
 
@@ -24,8 +26,8 @@ worth remembering if you start relying on it longer-term.
 ## Not yet built
 
 - The app's own ECS service (`shipit-production`) that the Jenkinsfile's
-  deploy stage targets — infra for it isn't scaffolded yet, so that stage
-  will fail until it exists.
+  deploy stage (in `fastapi-jfrog-demo`) targets — infra for it isn't
+  scaffolded yet, so that stage will fail until it exists.
 - Artifactory repos and Xray watches/policies — created in the JFrog UI,
   not Terraform (see steps below).
 
@@ -61,30 +63,22 @@ worth remembering if you start relying on it longer-term.
    stages run on this same instance. Add a `jfrog-access-token`
    (Secret text) credential.
 
-4. **Edit `Jenkinsfile`** — replace `JF_URL`, `DOCKER_REGISTRY`, and
-   `ECS_CLUSTER` placeholders with real values.
+4. **Edit `fastapi-jfrog-demo`'s `Jenkinsfile`** — replace `JF_URL`,
+   `DOCKER_REGISTRY`, and `ECS_CLUSTER` placeholders with real values.
 
-5. **Push this repo to GitHub**, create a Jenkins **Multibranch Pipeline**
-   job pointing at it (a plain Pipeline job won't populate
-   `env.BRANCH_NAME`, which the branch-routing logic needs), wire the
-   GitHub webhook to `http://<jenkins-ip>:8080/github-webhook/`.
+5. **Create a Jenkins Multibranch Pipeline** job pointing at
+   `fastapi-jfrog-demo` (not this repo — a plain Pipeline job won't
+   populate `env.BRANCH_NAME`, which the branch-routing logic needs), wire
+   the GitHub webhook to `http://<jenkins-ip>:8080/github-webhook/`.
 
-6. **Dry run.** Push a commit on a `feature/*` branch, watch the pipeline
-   build into `docker-sandbox-local` with the deliberately outdated base
-   image (`app/base-image.env` starts on `3.9-slim-buster`) and get
-   blocked at the Xray gate.
+6. **Dry run.** Push a commit on a `feature/*` branch of
+   `fastapi-jfrog-demo`, watch the pipeline build into
+   `docker-sandbox-local` with the deliberately outdated base image
+   (`app/base-image.env` starts on `3.9-slim-buster`) and get blocked at
+   the Xray gate.
 
-7. **Run `scripts/break-the-build.sh`**, commit, push — switches to a
-   patched base image, re-run clears the gate. Then push the same fix to
-   `master` to see it build straight into `docker-release-local` and
-   auto-deploy. This is the live-demo beat: broken → fixed, same
-   pipeline, no code changes besides the base image.
-
-## Local dry run (no Jenkins)
-
-```
-cd app
-docker build --build-arg PYTHON_VERSION=3.11-slim-bookworm -t shipit:local .
-docker run -p 8000:8000 shipit:local
-curl localhost:8000/version
-```
+7. **Run `fastapi-jfrog-demo`'s `scripts/break-the-build.sh`**, commit,
+   push — switches to a patched base image, re-run clears the gate. Then
+   push the same fix to `master` to see it build straight into
+   `docker-release-local` and auto-deploy. This is the live-demo beat:
+   broken → fixed, same pipeline, no code changes besides the base image.

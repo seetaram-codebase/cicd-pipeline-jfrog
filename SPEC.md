@@ -2,13 +2,16 @@
 
 What happens, exactly, from `git push` to a running container in
 production. Companion to `README.md` (setup steps) and `jfrog-agenda.txt`
-(the session this demo supports).
+(the session this demo supports). Split across two repos: this one is
+infra (Jenkins/AWS Terraform); the app and `Jenkinsfile` live in
+[fastapi-jfrog-demo](https://github.com/seetaram-codebase/fastapi-jfrog-demo).
 
 ## Components
 
 | Component | Role | Defined in | Status |
 |---|---|---|---|
-| GitHub repo | source + webhook trigger | `github.com/seetaram-codebase/cicd-pipeline-jfrog` | **Live** |
+| GitHub repo (infra) | Jenkins/AWS Terraform | `github.com/seetaram-codebase/cicd-pipeline-jfrog` | **Live** |
+| GitHub repo (app) | source + webhook trigger, app + Jenkinsfile | `github.com/seetaram-codebase/fastapi-jfrog-demo` | **Live** |
 | Jenkins controller + build execution | schedules pipeline, serves UI/webhook endpoint, runs `docker build` / `jf` / `aws` CLI | `infra/jenkins-ecs/agent-ec2.tf` (single EC2 instance) | Scaffolded, not applied |
 | Terraform apply path | provisions the instance above | `.github/workflows/infrastructure.yml`, state in Terraform Cloud (`agentic-ai-org` / `jfrog-demo-jenkins`) | Scaffolded — needs `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `TF_API_TOKEN` added as repo secrets, then run manually from the Actions tab |
 | JFrog Artifactory | stores the image, 2 Docker repos (sandbox, release) | JFrog Cloud console | Not started |
@@ -90,9 +93,11 @@ populated.
 5. Create the 2 Docker repos (`docker-sandbox-local`, `docker-release-local`),
    2 Xray watches, and the blocking policy.
 6. Generate a JFrog access token; add it as the `jfrog-access-token` Jenkins credential.
-7. Edit `Jenkinsfile` placeholders: `JF_URL`, `DOCKER_REGISTRY`, `ECS_CLUSTER`.
+7. Edit `fastapi-jfrog-demo`'s `Jenkinsfile` placeholders: `JF_URL`,
+   `DOCKER_REGISTRY`, `ECS_CLUSTER`.
 8. Build the missing piece: an ECS service for `shipit-production` and
    the Secrets Manager entry for Artifactory pull credentials.
 9. Wire the GitHub webhook to the Jenkins instance's public IP.
 10. First end-to-end dry run.
-11. Run `scripts/break-the-build.sh` to rehearse the Gate 1 failure/recovery beat.
+11. Run `fastapi-jfrog-demo`'s `scripts/break-the-build.sh` to rehearse the
+    Gate 1 failure/recovery beat.
