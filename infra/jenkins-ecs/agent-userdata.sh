@@ -25,12 +25,11 @@ mkdir -p /usr/libexec/docker/cli-plugins
 curl -fL "https://github.com/docker/buildx/releases/download/${BUILDX_VER}/buildx-${BUILDX_VER}.linux-amd64" -o /usr/libexec/docker/cli-plugins/docker-buildx
 chmod +x /usr/libexec/docker/cli-plugins/docker-buildx
 
-# JFrog CLI — the installer drops a binary literally named `jfrog` (not
-# `jf`) into the current directory.
-mkdir -p /tmp/jfrog-install && cd /tmp/jfrog-install
-curl -fL https://getcli.jfrog.io | sh
-install -m 0755 jfrog /usr/local/bin/jf
-cd /
+# JFrog CLI v2 — getcli.jfrog.io defaults to the legacy v1 CLI, whose
+# command set (no unified `jf docker push`, etc.) doesn't match what the
+# Jenkinsfile uses. install-cli.jfrog.io is the v2 installer; it places
+# the binary directly at /usr/local/bin/jf itself.
+curl -fL https://install-cli.jfrog.io | sh
 
 # Jenkins, from the official apt repo. The signing key is year-suffixed
 # and rotates periodically (current one expires 2028-12-21) — if apt
