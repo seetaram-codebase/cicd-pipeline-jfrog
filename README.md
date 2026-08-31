@@ -34,7 +34,7 @@ worth remembering if you start relying on it longer-term.
 ## Setup order
 
 1. **JFrog Cloud** — confirm your trial/tier includes Xray, then create
-   two Docker repos: `docker-sandbox-local`, `docker-release-local`.
+   two Docker repos: `artifact-sandbox`, `artifact-release`.
    Attach an Xray watch + policy to each per the gate table in `SPEC.md`
    (Critical/High blocks on sandbox; Critical/High/Medium blocks on
    release — passing the release-repo gate is what lets a build reach
@@ -72,13 +72,12 @@ worth remembering if you start relying on it longer-term.
    the GitHub webhook to `http://<jenkins-ip>:8080/github-webhook/`.
 
 6. **Dry run.** Push a commit on a `feature/*` branch of
-   `fastapi-jfrog-demo`, watch the pipeline build into
-   `docker-sandbox-local` with the deliberately outdated base image
-   (`app/base-image.env` starts on `3.9-slim-buster`) and get blocked at
-   the Xray gate.
+   `fastapi-jfrog-demo`, watch the pipeline build into `artifact-sandbox`
+   with the deliberately outdated base image (`app/base-image.env` starts
+   on `3.9-slim-buster`) and get blocked at the Xray gate.
 
 7. **Run `fastapi-jfrog-demo`'s `scripts/break-the-build.sh`**, commit,
    push — switches to a patched base image, re-run clears the gate. Then
    push the same fix to `master` to see it build straight into
-   `docker-release-local` and auto-deploy. This is the live-demo beat:
+   `artifact-release` and auto-deploy. This is the live-demo beat:
    broken → fixed, same pipeline, no code changes besides the base image.
