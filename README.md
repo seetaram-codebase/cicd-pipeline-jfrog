@@ -71,10 +71,12 @@ worth remembering if you start relying on it longer-term.
    populate `env.BRANCH_NAME`, which the branch-routing logic needs), wire
    the GitHub webhook to `http://<jenkins-ip>:8080/github-webhook/`.
 
-6. **Dry run.** Push a commit on a `feature/*` branch of
-   `fastapi-jfrog-demo`, watch the pipeline build into `artifact-sandbox`
-   with the deliberately outdated base image (`app/base-image.env` starts
-   on `3.9-slim-buster`) and get blocked at the Xray gate.
+6. **Dry run.** Push to `fastapi-jfrog-demo`'s `feature/vulnerable-demo`
+   branch, watch the pipeline build into `artifact-sandbox` with the
+   deliberately outdated base image (`base-image.env` pinned to
+   `3.9-slim-buster`) and get blocked at the Xray gate. `master` is
+   pinned to a patched base image, so pushing there demonstrates the
+   clean, auto-deployed path instead.
 
 7. **Run `fastapi-jfrog-demo`'s `scripts/break-the-build.sh`**, commit,
    push — switches to a patched base image, re-run clears the gate. Then

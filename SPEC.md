@@ -47,7 +47,7 @@ populated.
    targets `artifact-sandbox`; `develop`/`master` target `artifact-release`
    directly — there's no promotion step, the image is built straight into
    its final repo based on which branch triggered it.
-7. Reads `app/base-image.env` for the current base image tag, runs
+7. Reads `base-image.env` for the current base image tag, runs
    `docker build` with that plus git-sha/build-number build-args, tags the
    result `<registry>/<target-repo>/shipit:<sha>-<build>`.
 8. `jf docker push` to the target repo, then `jf rt build-publish` —
