@@ -8,11 +8,6 @@ and `scripts/break-the-build.sh` — lives in a separate repo:
 That's what the Jenkins job actually builds; this repo just stands up
 Jenkins itself.
 
-See `TALKING_POINTS.md` for the full end-to-end narrative of how this
-was built and debugged — architecture decisions, the real JFrog Xray
-gate quirks found along the way, and what running it end to end
-actually proved.
-
 ## Architecture note: one EC2 instance
 
 Jenkins runs on a single EC2 instance (`infra/jenkins-ecs/agent-ec2.tf`) —
