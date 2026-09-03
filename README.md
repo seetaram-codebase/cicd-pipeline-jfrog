@@ -36,9 +36,8 @@ worth remembering if you start relying on it longer-term.
 1. **JFrog Cloud** — confirm your trial/tier includes Xray, then create
    two Docker repos: `artifact-sandbox`, `artifact-release`.
    Attach an Xray watch + policy to each per the gate table in `SPEC.md`
-   (Critical/High blocks on sandbox; Critical/High/Medium blocks on
-   release — passing the release-repo gate is what lets a build reach
-   production).
+   (both block Critical/High — passing the release-repo gate is what
+   lets a build reach production).
 
 2. **Jenkins infrastructure — applied via GitHub Actions, not locally.**
    `infra/jenkins-ecs/providers.tf` uses a Terraform Cloud backend

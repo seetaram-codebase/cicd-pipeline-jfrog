@@ -53,11 +53,15 @@ populated.
 8. `jf docker push` to the target repo, then `jf rt build-publish` —
    build-info (git commit, dependencies, timestamps) is recorded in
    Artifactory against this build name/number.
-9. **Xray gate.** Xray auto-scans the pushed image via the watch on
-   whichever repo it landed in — `artifact-sandbox`'s watch blocks
-   Critical/High, `artifact-release`'s watch also blocks Medium.
-   Jenkins runs `jf build-scan --fail=true` inline; a violation fails the
-   pipeline right here.
+9. **Xray gate.** Jenkins runs `jf docker scan ... --watches=<gate>
+   --fail=true` against the pushed image directly (not `jf build-scan` —
+   that resource type never actually computes violations on this
+   account). Both `sandox-xray-gate` (on `artifact-sandbox`) and
+   `release-xray-gate` (on `artifact-release`) block on Critical/High —
+   a Medium threshold on release was tried and dropped, since ~86% of
+   real-world Medium findings on a Debian base image are OS packages
+   with no fix version available at all, making that threshold
+   unachievable in practice. A violation fails the pipeline right here.
 10. **If this was a `develop`/`master` build and the scan passed:**
     `aws ecs update-service ... shipit-production ...` runs automatically
     — no human click in between. The production task pulls the new tag
@@ -79,7 +83,7 @@ populated.
 | Repository | Populated by | Gate to get in |
 |---|---|---|
 | `artifact-sandbox` | `feature/*` (and any other non-release) branch builds | block on Critical/High CVE |
-| `artifact-release` | `develop`/`master` branch builds, pushed directly (no promotion) | block on Critical/High/**Medium** CVE — passing this gate auto-deploys to prod |
+| `artifact-release` | `develop`/`master` branch builds, pushed directly (no promotion) | block on Critical/High CVE — passing this gate auto-deploys to prod |
 
 ## What's built vs. what's next
 
