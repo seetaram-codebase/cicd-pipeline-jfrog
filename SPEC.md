@@ -12,12 +12,13 @@ infra (Jenkins/AWS Terraform); the app and `Jenkinsfile` live in
 |---|---|---|---|
 | GitHub repo (infra) | Jenkins/AWS Terraform | `github.com/seetaram-codebase/cicd-pipeline-jfrog` | **Live** |
 | GitHub repo (app) | source + webhook trigger, app + Jenkinsfile | `github.com/seetaram-codebase/fastapi-jfrog-demo` | **Live** |
-| Jenkins controller + build execution | schedules pipeline, serves UI/webhook endpoint, runs `docker build` / `jf` / `aws` CLI | `infra/jenkins-ecs/agent-ec2.tf` (single EC2 instance) | Scaffolded, not applied |
-| Terraform apply path | provisions the instance above | `.github/workflows/infrastructure.yml`, state in Terraform Cloud (`agentic-ai-org` / `jfrog-demo-jenkins`) | Scaffolded — needs `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `TF_API_TOKEN` added as repo secrets, then run manually from the Actions tab |
+| Jenkins controller + build execution | schedules pipeline, serves UI/webhook endpoint, runs `docker build` / `jf` / `aws` CLI | `infra/jenkins-ecs/agent-ec2.tf` (single EC2 instance) | **Live** |
+| Terraform apply path (Jenkins) | provisions the instance above | `.github/workflows/infrastructure.yml`, state in Terraform Cloud (`agentic-ai-org` / `jfrog-demo-jenkins`) | **Live** |
 | JFrog Artifactory | stores the image, 2 Docker repos (`artifact-sandbox`, `artifact-release`) | JFrog Cloud console | **Live** |
-| JFrog Xray | scans + gate policies | JFrog Cloud console | Not started |
-| ECS production service | runs `shipit` in prod | not yet scaffolded | Not started |
-| GitHub webhook | fires Jenkins on push | GitHub repo settings | Not started (needs Jenkins IP first) |
+| JFrog Xray | scans + gate policies (`Security_policy_1` / sandbox, `Release_policy_1` / release, both tuned via contextual analysis + reviewed CVE-ID exceptions) | JFrog Cloud console | **Live** |
+| ECS production service | runs `shipit` in prod, ALB in front | `infra/app-ecs/` (single EC2 container instance, EC2 launch type — not Fargate) | Scaffolded, not applied |
+| Terraform apply path (app) | provisions the ECS service above | `.github/workflows/app-infrastructure.yml`, state in Terraform Cloud (`agentic-ai-org` / `jfrog-demo-app`) | Scaffolded — run manually from the Actions tab, `plan` then `apply` |
+| GitHub webhook | fires Jenkins on push | GitHub repo settings | **Live** |
 
 Jenkins controller and build execution run on the same EC2 instance —
 a real Docker daemon (not Fargate, which disallows privileged
@@ -75,7 +76,7 @@ populated.
 |---|---|---|
 | JFrog access token | Jenkins credential store, id `jfrog-access-token` | `Jenkinsfile` → `withCredentials` |
 | AWS permissions | EC2 instance's instance profile (`jenkins` IAM role) — no static keys | `aws ecs update-service` calls |
-| ECS → Artifactory image pull | Secrets Manager entry, referenced by ECS task def's `repositoryCredentials` | not yet created — part of the missing ECS-services piece |
+| ECS → Artifactory image pull | Secrets Manager entry `jfrog-demo-app-jfrog-pull-creds`, referenced by ECS task def's `repositoryCredentials` | created by `infra/app-ecs/ecs.tf`, value populated manually after apply (see that module's `next_steps` output) |
 | GitHub webhook secret | not configured in this scaffold | optional hardening; add via Jenkins GitHub plugin if used beyond a demo |
 
 ## Registry structure and gates
@@ -99,8 +100,10 @@ populated.
 6. Generate a JFrog access token; add it as the `jfrog-access-token` Jenkins credential.
 7. Edit `fastapi-jfrog-demo`'s `Jenkinsfile` placeholders: `JF_URL`,
    `DOCKER_REGISTRY`, `ECS_CLUSTER`.
-8. Build the missing piece: an ECS service for `shipit-production` and
-   the Secrets Manager entry for Artifactory pull credentials.
+8. Run the "App Infrastructure - Terraform" workflow from the Actions tab
+   — `plan` first, then `apply` — to stand up the ECS cluster/service and
+   Secrets Manager entry. Populate the secret's value per that module's
+   `next_steps` output; the service stays down until a real image exists.
 9. Wire the GitHub webhook to the Jenkins instance's public IP.
 10. First end-to-end dry run.
 11. Run `fastapi-jfrog-demo`'s `scripts/break-the-build.sh` to rehearse the

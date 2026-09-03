@@ -12,7 +12,7 @@
 set -euo pipefail
 
 apt-get update -y
-apt-get install -y docker.io curl unzip openjdk-21-jre-headless awscli git gnupg
+apt-get install -y docker.io curl unzip openjdk-21-jre-headless awscli git gnupg jq
 
 systemctl enable --now docker
 usermod -aG docker ubuntu

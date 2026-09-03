@@ -23,11 +23,31 @@ separate durable store — if the instance is terminated, Jenkins config
 (admin user, plugins, credentials) goes with it. Fine for this demo;
 worth remembering if you start relying on it longer-term.
 
+## The app's own infra: `infra/app-ecs/`
+
+A second, independent Terraform module — own Terraform Cloud workspace
+(`jfrog-demo-app`), own GitHub Actions workflow
+(`.github/workflows/app-infrastructure.yml`), applied the same way as
+Jenkins' infra (Actions tab → plan, then apply). It stands up what the
+Jenkinsfile's `Deploy to ECS production` stage targets:
+
+- ECS cluster `jfrog-demo-app` with a single EC2 container instance
+  (same "one box" choice as Jenkins, not Fargate) running the `shipit`
+  task, `desired_count = 1`.
+- An ALB in front for a stable public URL — `terraform output app_url`.
+- A Secrets Manager entry for the ECS task execution role's
+  `repositoryCredentials`, so it can pull from `artifact-release` — the
+  value isn't set by Terraform, see `infra/app-ecs/outputs.tf`'s
+  `next_steps` output after apply.
+
+The task definition starts pointed at a placeholder image
+(`shipit:bootstrap`, which doesn't exist) — expected. The first
+successful `master`-branch Jenkins run registers a real revision with a
+real image tag and updates the service; that's when a task actually
+starts.
+
 ## Not yet built
 
-- The app's own ECS service (`shipit-production`) that the Jenkinsfile's
-  deploy stage (in `fastapi-jfrog-demo`) targets — infra for it isn't
-  scaffolded yet, so that stage will fail until it exists.
 - Artifactory repos and Xray watches/policies — created in the JFrog UI,
   not Terraform (see steps below).
 
