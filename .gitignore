@@ -5,6 +5,7 @@
 *.tfvars
 !*.tfvars.example
 !infra/jenkins-ecs/environments/*.tfvars
+!infra/app-ecs/environments/*.tfvars
 crash.log
 crash.*.log
 
